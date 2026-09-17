@@ -9,6 +9,7 @@ A terminal workspace manager for macOS. Organize multiple terminals in an infini
 - Adjustable `Cmd+Scroll` speed
 - Keyboard-driven navigation (`Cmd+Arrows`)
 - Tmux-backed session persistence
+- Terminal.app-style file drag-and-drop and paste (inserts shell-escaped absolute paths)
 - Inline markdown notes per row
 - Auto-saved workspace state
 - Agent task queue with process-tree provider detection
