@@ -1,10 +1,13 @@
 import AppKit
 import SwiftTerm
 
-/// Terminal view that handles Finder files the way Terminal.app does: a drag
-/// or a paste inserts their shell-escaped absolute paths instead of just the
-/// display name.
-final class PathDropTerminalView: LocalProcessTerminalView {
+/// App-owned terminal view.
+///
+/// - Finder files dragged onto the view (or pasted with Cmd+V) become
+///   shell-escaped absolute paths, the way Terminal.app does it.
+/// - The blinking caret steps aside while an input method is composing, so it
+///   cannot cover the marked-text preview (see `syncCaretDuringComposition`).
+final class AppTerminalView: LocalProcessTerminalView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         registerForDraggedTypes([.fileURL])
@@ -14,6 +17,48 @@ final class PathDropTerminalView: LocalProcessTerminalView {
         super.init(coder: coder)
         registerForDraggedTypes([.fileURL])
     }
+
+    // MARK: - IME composition caret
+
+    override func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
+        super.setMarkedText(string, selectedRange: selectedRange, replacementRange: replacementRange)
+        syncCaretDuringComposition()
+    }
+
+    override func insertText(_ string: Any, replacementRange: NSRange) {
+        super.insertText(string, replacementRange: replacementRange)
+        syncCaretDuringComposition()
+    }
+
+    override func unmarkText() {
+        super.unmarkText()
+        syncCaretDuringComposition()
+    }
+
+    /// SwiftTerm shows the pinyin preview as a subview anchored at the caret,
+    /// but it re-adds its own CaretView on top of that preview every time the
+    /// running program brings the hardware cursor back, so the blinking block
+    /// swallows the first character of the composition. Hide the caret while
+    /// marked text exists; the underlined preview marks the insertion point.
+    override func didAddSubview(_ subview: NSView) {
+        super.didAddSubview(subview)
+        if Self.isCaretView(subview), hasMarkedText() {
+            subview.isHidden = true
+        }
+    }
+
+    private func syncCaretDuringComposition() {
+        guard let caret = subviews.first(where: { Self.isCaretView($0) }) else { return }
+        caret.isHidden = hasMarkedText()
+    }
+
+    /// SwiftTerm keeps `CaretView` internal, so match its class name instead of
+    /// its type.
+    private static func isCaretView(_ view: NSView) -> Bool {
+        String(describing: type(of: view)) == "CaretView"
+    }
+
+    // MARK: - File drops and paste
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         filePaths(from: sender.draggingPasteboard).isEmpty ? [] : .copy

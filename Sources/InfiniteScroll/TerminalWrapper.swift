@@ -93,7 +93,7 @@ struct TerminalWrapper: NSViewRepresentable {
     let onCwdChange: (String) -> Void
 
     func makeNSView(context: Context) -> LocalProcessTerminalView {
-        let termView = PathDropTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        let termView = AppTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         // Keep the same bounded history as the app-managed tmux pane so native
         // scrolling can reach the complete retained terminal history without
         // using tmux copy-mode.
