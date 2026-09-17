@@ -5,14 +5,6 @@ enum WorkspaceSearchMatchKind: Equatable {
     case directory
     case notes
 
-    var label: String {
-        switch self {
-        case .title: return "Row name"
-        case .directory: return "Folder"
-        case .notes: return "Notes"
-        }
-    }
-
     var systemImageName: String {
         switch self {
         case .title: return "rectangle.3.group"
@@ -36,7 +28,8 @@ enum WorkspaceSearch {
     static func results(
         in panels: [PanelModel],
         matching rawQuery: String,
-        limit: Int = 50
+        limit: Int = 50,
+        strings: Strings
     ) -> [WorkspaceSearchResult] {
         let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty, limit > 0 else { return [] }
@@ -47,13 +40,17 @@ enum WorkspaceSearch {
                 ?? panel.cells.first?.id
             else { continue }
 
-            let rowLabel = panel.isMaster ? "Master row" : "Row \(index)"
-            if panel.title.localizedCaseInsensitiveContains(query) {
+            // Generated titles are stored in English; show (and match) the
+            // localized form while keeping the persisted value untouched.
+            let displayTitle = strings.rowTitle(panel.title, isMaster: panel.isMaster)
+            let rowLabel = panel.isMaster ? strings.masterRowDetail : strings.rowDetail(index: index)
+            if displayTitle.localizedCaseInsensitiveContains(query)
+                || panel.title.localizedCaseInsensitiveContains(query) {
                 matches.append(
                     WorkspaceSearchResult(
                         rowID: panel.id,
                         cellID: defaultCellID,
-                        rowTitle: panel.title,
+                        rowTitle: displayTitle,
                         detail: rowLabel,
                         matchKind: .title
                     )
@@ -65,7 +62,7 @@ enum WorkspaceSearch {
                     WorkspaceSearchResult(
                         rowID: panel.id,
                         cellID: terminal.id,
-                        rowTitle: panel.title,
+                        rowTitle: displayTitle,
                         detail: terminal.cwd,
                         matchKind: .directory
                     )
@@ -77,7 +74,7 @@ enum WorkspaceSearch {
                     WorkspaceSearchResult(
                         rowID: panel.id,
                         cellID: notes.id,
-                        rowTitle: panel.title,
+                        rowTitle: displayTitle,
                         detail: notesPreview(notes.text),
                         matchKind: .notes
                     )
@@ -87,7 +84,7 @@ enum WorkspaceSearch {
                     WorkspaceSearchResult(
                         rowID: panel.id,
                         cellID: defaultCellID,
-                        rowTitle: panel.title,
+                        rowTitle: displayTitle,
                         detail: notesPreview(panel.notesText),
                         matchKind: .notes
                     )

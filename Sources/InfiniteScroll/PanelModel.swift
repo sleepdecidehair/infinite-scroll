@@ -92,7 +92,17 @@ class PanelModel: ObservableObject, Identifiable {
         if isMaster {
             return title == defaultMasterTitle
         }
-        return title.range(of: #"^Row #\d+$"#, options: .regularExpression) != nil
+        return generatedRowIndex(of: title) != nil
+    }
+
+    /// Row number of a generated `Row #n` title, or nil for custom titles.
+    /// Localized display titles are derived from this without touching the
+    /// persisted (English) form.
+    static func generatedRowIndex(of title: String) -> Int? {
+        guard let range = title.range(of: #"^Row #(\d+)$"#, options: .regularExpression) else {
+            return nil
+        }
+        return Int(title[range].dropFirst(5))
     }
 }
 

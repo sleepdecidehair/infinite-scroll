@@ -8,6 +8,7 @@ struct AppState: Codable {
     let rowHeight: CGFloat?
     let commandScrollSpeed: CGFloat?
     let scrollbackLimit: Int?
+    let appLanguage: AppLanguage?
 }
 
 enum PersistenceManager {

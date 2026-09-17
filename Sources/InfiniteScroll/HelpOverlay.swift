@@ -2,26 +2,29 @@ import SwiftUI
 
 struct HelpOverlay: View {
     @Binding var isPresented: Bool
+    @Environment(\.strings) private var strings
 
-    private static let shortcuts: [(key: String, description: String)] = [
-        ("⌘ W",         "Close current cell"),
-        ("⌘ D",         "Duplicate current cell"),
-        ("⌘ ⇧ ↑",      "New row above"),
-        ("⌘ ⇧ ↓",      "New row below; terminal if empty"),
-        ("⌘ ⇧ R",      "Rename current row"),
-        ("⌘ =",         "Zoom in"),
-        ("⌘ -",         "Zoom out"),
-        ("⌘ ,",         "Open settings"),
-        ("⌘ ↑",         "Focus row above"),
-        ("⌘ ↓",         "Focus row below"),
-        ("⌘ ←",         "Focus left"),
-        ("⌘ →",         "Focus right"),
-        ("⌘ Scroll",    "Scroll between rows (speed in Settings)"),
-        ("⌘ F",         "Find rows, folders, and notes"),
-        ("⇧ Enter",     "Send newline in terminal"),
-        ("⌘ ⌫",         "Delete to start of line (notes)"),
-        ("⌘ /",         "Toggle this help"),
-    ]
+    private var shortcuts: [(key: String, description: String)] {
+        [
+            ("⌘ W",         strings.helpCloseCurrentCell),
+            ("⌘ D",         strings.helpDuplicateCell),
+            ("⌘ ⇧ ↑",      strings.helpNewRowAbove),
+            ("⌘ ⇧ ↓",      strings.helpNewRowBelow),
+            ("⌘ ⇧ R",      strings.helpRenameRow),
+            ("⌘ =",         strings.helpZoomIn),
+            ("⌘ -",         strings.helpZoomOut),
+            ("⌘ ,",         strings.helpOpenSettings),
+            ("⌘ ↑",         strings.helpFocusRowAbove),
+            ("⌘ ↓",         strings.helpFocusRowBelow),
+            ("⌘ ←",         strings.helpFocusLeft),
+            ("⌘ →",         strings.helpFocusRight),
+            ("⌘ Scroll",    strings.helpScrollRows),
+            ("⌘ F",         strings.helpFind),
+            ("⇧ Enter",     strings.helpShiftEnter),
+            ("⌘ ⌫",         strings.helpDeleteLine),
+            ("⌘ /",         strings.helpToggle),
+        ]
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -38,7 +41,7 @@ struct HelpOverlay: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        Text("Keyboard Shortcuts")
+                        Text(strings.helpTitle)
                             .font(.system(size: 16, weight: .semibold, design: .monospaced))
                             .foregroundColor(Theme.text)
                             .lineLimit(1)
@@ -58,7 +61,7 @@ struct HelpOverlay: View {
 
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ForEach(Array(Self.shortcuts.enumerated()), id: \.offset) { index, shortcut in
+                            ForEach(Array(shortcuts.enumerated()), id: \.offset) { index, shortcut in
                                 shortcutRow(shortcut, compact: usesCompactRows)
                                     .padding(.horizontal, 20)
                                     .padding(.vertical, usesCompactRows ? 8 : 7)

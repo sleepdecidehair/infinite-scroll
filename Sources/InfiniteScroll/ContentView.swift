@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var store: PanelStore
+    @Environment(\.strings) private var strings
     @StateObject private var agentStore = AgentWorkspaceStore()
 
     var body: some View {
@@ -27,12 +28,12 @@ struct ContentView: View {
                                                 .font(.system(size: 12, weight: .semibold))
                                                 .frame(width: 28, height: 28)
                                         } else {
-                                            Label("Show Agent Queue", systemImage: "sidebar.right")
+                                            Label(strings.showAgentQueue, systemImage: "sidebar.right")
                                                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
                                         }
                                     }
                                     .buttonStyle(.bordered)
-                                    .help("Show Agent Queue")
+                                    .help(strings.showAgentQueue)
 
                                     Spacer(minLength: 0)
                                 }
@@ -194,6 +195,7 @@ private struct WorkspaceLayout {
 
 private struct EmptyTerminalState: View {
     let createTerminal: () -> Void
+    @Environment(\.strings) private var strings
 
     var body: some View {
         VStack(spacing: 12) {
@@ -201,18 +203,18 @@ private struct EmptyTerminalState: View {
                 .font(.system(size: 34, weight: .medium))
                 .foregroundColor(Theme.textSecondary)
 
-            Text("No terminals open")
+            Text(strings.noTerminalsOpen)
                 .font(.system(size: 15, weight: .semibold, design: .monospaced))
                 .foregroundColor(Theme.text)
 
             Button(action: createTerminal) {
-                Label("New Terminal", systemImage: "plus")
+                Label(strings.newTerminal, systemImage: "plus")
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.accent)
             .controlSize(.large)
 
-            Text("or press ⌘ ⇧ ↓")
+            Text(strings.newTerminalHint)
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(Theme.textSecondary)
         }

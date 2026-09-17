@@ -99,6 +99,7 @@ final class AgentWorkspaceStore: ObservableObject {
         }
 
         let now = Date()
+        let strings = L10n.strings
         let run = AgentRun(
             cellID: target.id,
             taskID: taskID,
@@ -108,14 +109,14 @@ final class AgentWorkspaceStore: ObservableObject {
             confidence: .confirmed,
             startedAt: now,
             lastActivityAt: now,
-            statusMessage: "Launching \(tasks[taskIndex].provider.displayName)"
+            statusMessage: strings.agentLaunching(tasks[taskIndex].provider.displayName)
         )
         runs[target.id] = run
 
         tasks[taskIndex].state = .starting
         tasks[taskIndex].assignedCellID = target.id
         tasks[taskIndex].runID = run.id
-        tasks[taskIndex].statusMessage = "Starting \(tasks[taskIndex].provider.displayName)"
+        tasks[taskIndex].statusMessage = strings.agentStarting(tasks[taskIndex].provider.displayName)
         tasks[taskIndex].updatedAt = now
 
         let shellCommand = "cd -- \(shellQuote(target.cwd)) && \(launchArguments.map(shellQuote).joined(separator: " "))"
@@ -133,7 +134,7 @@ final class AgentWorkspaceStore: ObservableObject {
         let previousCellID = tasks[taskIndex].assignedCellID
         if taskHasOccupyingRun(tasks[taskIndex]) {
             tasks[taskIndex].state = .blocked
-            tasks[taskIndex].statusMessage = "Agent process is still running; focus it before retrying"
+            tasks[taskIndex].statusMessage = L10n.strings.agentStillRunningBeforeRetry
             tasks[taskIndex].updatedAt = Date()
             return
         }
@@ -156,18 +157,18 @@ final class AgentWorkspaceStore: ObservableObject {
 
         switch state {
         case .waiting:
-            tasks[taskIndex].statusMessage = "Waiting for input or a dependency"
+            tasks[taskIndex].statusMessage = L10n.strings.agentWaitingForInput
             updateRun(for: tasks[taskIndex], state: .waitingForUser)
         case .blocked:
-            tasks[taskIndex].statusMessage = "Blocked — needs review"
+            tasks[taskIndex].statusMessage = L10n.strings.agentBlockedNeedsReview
             updateRun(for: tasks[taskIndex], state: .waitingForApproval)
         case .completed:
-            tasks[taskIndex].statusMessage = "Marked complete"
+            tasks[taskIndex].statusMessage = L10n.strings.agentMarkedComplete
         case .failed:
-            tasks[taskIndex].statusMessage = "Marked failed"
+            tasks[taskIndex].statusMessage = L10n.strings.agentMarkedFailed
             updateRun(for: tasks[taskIndex], state: .failed)
         case .cancelled:
-            tasks[taskIndex].statusMessage = "Cancelled"
+            tasks[taskIndex].statusMessage = L10n.strings.agentCancelled
         case .pending, .starting, .running:
             tasks[taskIndex].statusMessage = nil
         }
@@ -259,12 +260,13 @@ final class AgentWorkspaceStore: ObservableObject {
                 else { return }
 
                 if sentEnter {
+                    let message = L10n.strings.agentCommandSent
                     var run = self.runs[cellID]!
-                    run.statusMessage = "Command sent; waiting for process"
+                    run.statusMessage = message
                     run.lastActivityAt = Date()
                     self.runs[cellID] = run
                     if let taskIndex = self.tasks.firstIndex(where: { $0.id == taskID }) {
-                        self.tasks[taskIndex].statusMessage = "Command sent; waiting for process"
+                        self.tasks[taskIndex].statusMessage = message
                         self.tasks[taskIndex].updatedAt = Date()
                     }
                 } else if attempt < 4 {
@@ -398,13 +400,13 @@ final class AgentWorkspaceStore: ObservableObject {
             ended.state = run.detectionSource == .managedLauncher ? .failed : .stopped
             ended.processID = nil
             ended.lastActivityAt = now
-            ended.statusMessage = "Agent process is no longer present"
+            ended.statusMessage = L10n.strings.agentProcessGone
             runs[cellID] = ended
 
             if let taskID = ended.taskID {
                 markTaskBlockedIfActive(
                     taskID,
-                    message: "Agent process ended; confirm the result before completing"
+                    message: L10n.strings.agentProcessEndedConfirm
                 )
             }
         }

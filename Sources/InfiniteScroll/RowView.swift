@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RowView: View {
     @ObservedObject var panel: PanelModel
+    @Environment(\.strings) private var strings
     let fontSize: CGFloat
     let fontName: String
     let rowHeight: CGFloat
@@ -20,7 +21,7 @@ struct RowView: View {
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
 
-                Text(panel.title)
+                Text(strings.rowTitle(panel.title, isMaster: panel.isMaster))
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(Theme.text)
                     .lineLimit(1)
@@ -34,14 +35,14 @@ struct RowView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("Rename row (⌘⇧R)")
-                .accessibilityLabel("Rename row")
+                .help(strings.renameRowHelp)
+                .accessibilityLabel(strings.renameRow)
                 .onHover { hovering in
                     if hovering { NSCursor.arrow.push() } else { NSCursor.pop() }
                 }
 
                 if isNewlyInserted {
-                    Text("NEW")
+                    Text(strings.newRowBadge)
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .foregroundColor(Theme.accent)
                         .padding(.horizontal, 6)
@@ -60,8 +61,8 @@ struct RowView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("Toggle notes")
-                .accessibilityLabel("Toggle notes")
+                .help(strings.toggleNotes)
+                .accessibilityLabel(strings.toggleNotes)
                 .onHover { hovering in
                     if hovering { NSCursor.arrow.push() } else { NSCursor.pop() }
                 }
@@ -74,8 +75,8 @@ struct RowView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("Close row")
-                .accessibilityLabel("Close row")
+                .help(strings.closeRow)
+                .accessibilityLabel(strings.closeRow)
                 .onHover { hovering in
                     if hovering {
                         NSCursor.arrow.push()

@@ -77,19 +77,6 @@ enum AgentRunState: String, Codable, CaseIterable {
     case failed
     case unknown
 
-    var displayName: String {
-        switch self {
-        case .starting: "Starting"
-        case .working: "Running"
-        case .waitingForUser: "Asking"
-        case .waitingForApproval: "Approval"
-        case .idle: "Idle"
-        case .stopped: "Stopped"
-        case .failed: "Failed"
-        case .unknown: "Unknown"
-        }
-    }
-
     var occupiesTerminal: Bool {
         switch self {
         case .starting, .working, .waitingForUser, .waitingForApproval:
@@ -123,19 +110,6 @@ enum AgentTaskState: String, Codable, CaseIterable {
     case completed
     case failed
     case cancelled
-
-    var displayName: String {
-        switch self {
-        case .pending: "Pending"
-        case .starting: "Starting"
-        case .running: "Running"
-        case .waiting: "Waiting"
-        case .blocked: "Blocked"
-        case .completed: "Done"
-        case .failed: "Failed"
-        case .cancelled: "Cancelled"
-        }
-    }
 
     var isTerminal: Bool {
         switch self {

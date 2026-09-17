@@ -3,6 +3,7 @@ import SwiftUI
 
 struct WorkspaceFindBar: View {
     @EnvironmentObject var store: PanelStore
+    @Environment(\.strings) private var strings
     let maximumWidth: CGFloat
     @State private var query = ""
     @State private var shouldFocusSearchField = false
@@ -16,7 +17,7 @@ struct WorkspaceFindBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
-                Text("Find in Workspace")
+                Text(strings.findInWorkspaceTitle)
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                     .foregroundColor(Theme.text)
 
@@ -30,7 +31,7 @@ struct WorkspaceFindBar: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Close workspace search")
+                .accessibilityLabel(strings.closeWorkspaceSearch)
             }
             .padding(.horizontal, 14)
             .padding(.top, 12)
@@ -39,6 +40,8 @@ struct WorkspaceFindBar: View {
             WorkspaceSearchField(
                 text: $query,
                 shouldFocus: shouldFocusSearchField,
+                placeholder: strings.searchPlaceholder,
+                accessibilityLabel: strings.findInWorkspaceTitle,
                 onSubmit: jumpToFirstResult
             )
             .frame(height: 26)
@@ -70,12 +73,12 @@ struct WorkspaceFindBar: View {
         // empty check and the list doubled the cost on every keystroke.
         let matches = results
         if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            Text("Search row names, folders, and notes. Press Return to jump to the first result.")
+            Text(strings.searchHint)
                 .font(.system(size: 12))
                 .foregroundColor(Theme.textSecondary)
                 .padding(14)
         } else if matches.isEmpty {
-            Text("No workspace matches")
+            Text(strings.noWorkspaceMatches)
                 .font(.system(size: 12))
                 .foregroundColor(Theme.textSecondary)
                 .padding(14)
@@ -86,11 +89,14 @@ struct WorkspaceFindBar: View {
                         Button {
                             store.jumpToSearchResult(result)
                         } label: {
-                            WorkspaceSearchResultRow(result: result)
+                            WorkspaceSearchResultRow(
+                                result: result,
+                                kindLabel: strings.searchKindLabel(result.matchKind)
+                            )
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(
-                            "\(result.rowTitle), \(result.matchKind.label), \(result.detail)"
+                            "\(result.rowTitle), \(strings.searchKindLabel(result.matchKind)), \(result.detail)"
                         )
                     }
                 }
@@ -111,6 +117,7 @@ struct WorkspaceFindBar: View {
 
 private struct WorkspaceSearchResultRow: View {
     let result: WorkspaceSearchResult
+    let kindLabel: String
 
     var body: some View {
         HStack(spacing: 10) {
@@ -125,7 +132,7 @@ private struct WorkspaceSearchResultRow: View {
                     .foregroundColor(Theme.text)
                     .lineLimit(1)
 
-                Text("\(result.matchKind.label) · \(result.detail)")
+                Text("\(kindLabel) · \(result.detail)")
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundColor(Theme.textSecondary)
                     .lineLimit(1)
@@ -146,6 +153,8 @@ private struct WorkspaceSearchResultRow: View {
 private struct WorkspaceSearchField: NSViewRepresentable {
     @Binding var text: String
     let shouldFocus: Bool
+    let placeholder: String
+    let accessibilityLabel: String
     let onSubmit: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -154,8 +163,8 @@ private struct WorkspaceSearchField: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSSearchField {
         let field = NSSearchField()
-        field.placeholderString = "Search rows, folders, and notes"
-        field.setAccessibilityLabel("Find in Workspace")
+        field.placeholderString = placeholder
+        field.setAccessibilityLabel(accessibilityLabel)
         field.sendsSearchStringImmediately = true
         field.delegate = context.coordinator
         field.target = context.coordinator
@@ -168,6 +177,10 @@ private struct WorkspaceSearchField: NSViewRepresentable {
         if nsView.stringValue != text {
             nsView.stringValue = text
         }
+        if nsView.placeholderString != placeholder {
+            nsView.placeholderString = placeholder
+        }
+        nsView.setAccessibilityLabel(accessibilityLabel)
         guard shouldFocus, nsView.window?.firstResponder !== nsView else { return }
         DispatchQueue.main.async {
             nsView.window?.makeFirstResponder(nsView)

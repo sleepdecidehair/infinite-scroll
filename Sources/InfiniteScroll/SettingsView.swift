@@ -6,14 +6,23 @@ struct SettingsView: View {
     /// the right sidebar instead of the Settings scene.
     var embedded: Bool = false
     @EnvironmentObject var store: PanelStore
+    @Environment(\.strings) private var strings
     @State private var cliInstalled: Bool = CLIInstaller.isInstalled()
     @State private var cliBusy: Bool = false
     @State private var cliError: String?
 
     var body: some View {
         Form {
-            Section("Appearance") {
-                Picker("Font", selection: $store.fontName) {
+            Section(strings.settingsLanguage) {
+                Picker(strings.settingsInterfaceLanguage, selection: $store.appLanguage) {
+                    Text(strings.settingsLanguageSystem).tag(AppLanguage.system)
+                    Text("中文").tag(AppLanguage.chinese)
+                    Text("English").tag(AppLanguage.english)
+                }
+            }
+
+            Section(strings.settingsAppearance) {
+                Picker(strings.settingsFont, selection: $store.fontName) {
                     ForEach(PanelStore.availableMonospacedFonts, id: \.self) { name in
                         Text(name)
                             .font(.custom(name, size: 13))
@@ -22,29 +31,29 @@ struct SettingsView: View {
                 }
 
                 Stepper(value: $store.fontSize, in: 8...32, step: 1) {
-                    Text("Size: \(Int(store.fontSize))pt")
+                    Text(strings.settingsFontSize(Int(store.fontSize)))
                 }
             }
 
-            Section("Terminal") {
-                Picker("Scrollback", selection: $store.scrollbackLimit) {
+            Section(strings.settingsTerminal) {
+                Picker(strings.settingsScrollback, selection: $store.scrollbackLimit) {
                     ForEach(TmuxManager.historyLimitOptions, id: \.self) { limit in
-                        Text("\(limit.formatted()) lines").tag(limit)
+                        Text(strings.settingsScrollbackLines(limit)).tag(limit)
                     }
                 }
 
-                Text("Applies to every terminal and to the tmux sessions backing them. Larger values use more memory per terminal.")
+                Text(strings.settingsScrollbackNote)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
 
-            Section("Layout") {
+            Section(strings.settingsLayout) {
                 Stepper(
                     value: $store.rowHeight,
                     in: PanelStore.minRowHeight...PanelStore.maxRowHeight,
                     step: 25
                 ) {
-                    Text("Row height: \(Int(store.rowHeight))px")
+                    Text(strings.settingsRowHeight(Int(store.rowHeight)))
                 }
 
                 Slider(
@@ -54,9 +63,9 @@ struct SettingsView: View {
                 )
             }
 
-            Section("Navigation") {
+            Section(strings.settingsNavigation) {
                 HStack {
-                    Text("Workspace scroll speed")
+                    Text(strings.settingsScrollSpeed)
                     Spacer()
                     Text("\(Int((store.commandScrollSpeed * 100).rounded()))%")
                         .foregroundColor(.secondary)
@@ -68,17 +77,21 @@ struct SettingsView: View {
                     step: 0.25
                 )
 
-                Text("Applies only when holding Command while scrolling between rows.")
+                Text(strings.settingsScrollSpeedNote)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
 
-            Section("Shell command") {
+            Section(strings.settingsShellCommand) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(cliInstalled ? "Installed at \(CLIInstaller.installTarget)" : "Not installed")
-                            .font(.system(size: 12))
-                        Text("Lets AI agents and scripts read and manipulate cells from a terminal. Run 'infinite-scroll --help' to see commands.")
+                        Text(
+                            cliInstalled
+                                ? strings.settingsInstalledAt(CLIInstaller.installTarget)
+                                : strings.settingsNotInstalled
+                        )
+                        .font(.system(size: 12))
+                        Text(strings.settingsCLINote)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -91,7 +104,7 @@ struct SettingsView: View {
                     }
                     Spacer()
                     if cliInstalled {
-                        Button("Uninstall") {
+                        Button(strings.settingsUninstall) {
                             cliBusy = true
                             cliError = nil
                             DispatchQueue.global(qos: .userInitiated).async {
@@ -99,7 +112,7 @@ struct SettingsView: View {
                                 DispatchQueue.main.async {
                                     cliInstalled = CLIInstaller.isInstalled()
                                     if !ok {
-                                        cliError = "Uninstall failed. Check permissions for \(CLIInstaller.installTarget)."
+                                        cliError = strings.settingsUninstallFailed(CLIInstaller.installTarget)
                                     }
                                     cliBusy = false
                                 }
@@ -107,7 +120,7 @@ struct SettingsView: View {
                         }
                         .disabled(cliBusy)
                     } else {
-                        Button("Install Shell Command") {
+                        Button(strings.settingsInstall) {
                             cliBusy = true
                             cliError = nil
                             DispatchQueue.global(qos: .userInitiated).async {
@@ -115,7 +128,7 @@ struct SettingsView: View {
                                 DispatchQueue.main.async {
                                     cliInstalled = CLIInstaller.isInstalled()
                                     if !ok {
-                                        cliError = "Install failed. Check permissions for \(CLIInstaller.installTarget)."
+                                        cliError = strings.settingsInstallFailed(CLIInstaller.installTarget)
                                     }
                                     cliBusy = false
                                 }
@@ -127,7 +140,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: embedded ? nil : 480, height: embedded ? nil : 570)
+        .frame(width: embedded ? nil : 480, height: embedded ? nil : 620)
         .scrollContentBackground(embedded ? .hidden : .automatic)
         .background(embedded ? Theme.panelBackground : Color.clear)
         .onAppear { cliInstalled = CLIInstaller.isInstalled() }

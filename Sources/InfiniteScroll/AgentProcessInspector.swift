@@ -95,14 +95,15 @@ enum AgentProcessInspector {
         sessionName: String
     ) -> SemanticState {
         let state = inferredState(from: TmuxManager.visiblePaneText(session: sessionName))
+        let strings = L10n.strings
         let message: String
         switch state {
         case .waitingForApproval:
-            message = "\(provider.displayName) is waiting for approval"
+            message = strings.agentWaitingForApproval(provider.displayName)
         case .waitingForUser:
-            message = "\(provider.displayName) is asking for input"
+            message = strings.agentAskingForInput(provider.displayName)
         default:
-            message = "\(provider.displayName) is running"
+            message = strings.agentRunning(provider.displayName)
         }
         return SemanticState(state: state, statusMessage: message)
     }

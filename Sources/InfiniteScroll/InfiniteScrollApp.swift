@@ -6,9 +6,12 @@ struct InfiniteScrollApp: App {
     @StateObject private var store = PanelStore()
 
     var body: some Scene {
+        let strings = Strings(language: store.appLanguage.resolved)
+
         WindowGroup {
             ContentView()
                 .environmentObject(store)
+                .environment(\.strings, strings)
                 .frame(minWidth: 640, minHeight: 420)
         }
         .windowStyle(.titleBar)
@@ -20,78 +23,78 @@ struct InfiniteScrollApp: App {
 
             // Cmd+W: close current cell
             CommandGroup(replacing: .saveItem) {
-                Button("Close Cell") {
+                Button(strings.menuCloseCell) {
                     store.closeCurrentCell()
                 }
                 .keyboardShortcut("w", modifiers: .command)
             }
             CommandGroup(after: .newItem) {
                 // Cmd+D: duplicate current cell
-                Button("Duplicate Cell") {
+                Button(strings.menuDuplicateCell) {
                     store.duplicateCurrentCell()
                 }
                 .keyboardShortcut("d", modifiers: .command)
 
                 // Cmd+Shift+Up: new row above
-                Button("New Row Above") {
+                Button(strings.menuNewRowAbove) {
                     store.addPanelAbove()
                 }
                 .keyboardShortcut(.upArrow, modifiers: [.command, .shift])
 
                 // Cmd+Shift+Down: new row below
-                Button("New Row Below") {
+                Button(strings.menuNewRowBelow) {
                     store.addPanel()
                 }
                 .keyboardShortcut(.downArrow, modifiers: [.command, .shift])
 
-                Button("Rename Current Row") {
+                Button(strings.menuRenameCurrentRow) {
                     store.renameCurrentRow()
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
             }
             CommandGroup(after: .pasteboard) {
                 Divider()
-                Button("Find in Workspace…") {
+                Button(strings.menuFindInWorkspace) {
                     store.toggleWorkspaceSearch()
                 }
                 .keyboardShortcut("f", modifiers: .command)
 
                 Divider()
-                Button("Copy CLI Prompt") {
+                Button(strings.menuCopyCLIPrompt) {
                     CLIPromptCopier.copyToPasteboard()
                 }
             }
             CommandGroup(replacing: .help) {
-                Button("Keyboard Shortcuts") {
+                Button(strings.menuKeyboardShortcuts) {
                     store.showHelp.toggle()
                 }
                 .keyboardShortcut("/", modifiers: .command)
             }
             CommandGroup(after: .toolbar) {
-                Button("Zoom In") {
+                Button(strings.menuZoomIn) {
                     store.zoomIn()
                 }
                 .keyboardShortcut("=", modifiers: .command)
-                Button("Zoom Out") {
+                Button(strings.menuZoomOut) {
                     store.zoomOut()
                 }
                 .keyboardShortcut("-", modifiers: .command)
 
                 Divider()
 
-                Button("Focus Row Above") {
+                Button(strings.menuFocusRowAbove) {
                     store.focusUp()
                 }
                 .keyboardShortcut(.upArrow, modifiers: .command)
-                Button("Focus Row Below") {
+                Button(strings.menuFocusRowBelow) {
                     store.focusDown()
                 }
                 .keyboardShortcut(.downArrow, modifiers: .command)
-                Button("Focus Left") {
+                Button(strings.menuFocusLeft) {
                     store.focusLeft()
                 }
                 .keyboardShortcut(.leftArrow, modifiers: .command)
-                Button("Focus Right") {
+                Button(strings.menuFocusRight) {
                     store.focusRight()
                 }
                 .keyboardShortcut(.rightArrow, modifiers: .command)
@@ -101,6 +104,7 @@ struct InfiniteScrollApp: App {
         Settings {
             SettingsView()
                 .environmentObject(store)
+                .environment(\.strings, strings)
         }
     }
 }

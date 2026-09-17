@@ -3,6 +3,7 @@ import SwiftUI
 
 struct AgentQueueView: View {
     @ObservedObject var agentStore: AgentWorkspaceStore
+    @Environment(\.strings) private var strings
     @State private var showSettings = false
     private static let recentStoppedRunInterval: TimeInterval = 10 * 60
 
@@ -52,7 +53,7 @@ struct AgentQueueView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(Theme.accent)
 
-            Text(showSettings ? "Settings" : "Agent Queue")
+            Text(showSettings ? strings.settings : strings.agentQueue)
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
                 .foregroundColor(Theme.text)
 
@@ -75,7 +76,7 @@ struct AgentQueueView: View {
                     .foregroundColor(showSettings ? Theme.accent : Theme.textSecondary)
             }
             .buttonStyle(.plain)
-            .help(showSettings ? "Back to Agent Queue" : "Settings")
+            .help(showSettings ? strings.backToAgentQueue : strings.settings)
 
             Button {
                 agentStore.isQueueVisible = false
@@ -85,7 +86,7 @@ struct AgentQueueView: View {
                     .foregroundColor(Theme.textSecondary)
             }
             .buttonStyle(.plain)
-            .help("Hide Agent Queue")
+            .help(strings.hideAgentQueue)
         }
         .padding(.horizontal, 12)
         .frame(height: 40)
@@ -93,7 +94,7 @@ struct AgentQueueView: View {
 
     private var runSection: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("AGENT ACTIVITY")
+            Text(strings.agentActivity)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .foregroundColor(Theme.textSecondary)
 
@@ -108,11 +109,11 @@ struct AgentQueueView: View {
             Image(systemName: "bolt.horizontal.circle")
                 .font(.system(size: 22))
                 .foregroundColor(Theme.textSecondary)
-            Text("No agents detected in this workspace.")
+            Text(strings.noAgentsDetected)
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
-            Text("Start an agent in any terminal and it will appear here automatically.")
+            Text(strings.startAgentHint)
                 .font(.system(size: 10, design: .monospaced))
                 .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
@@ -134,6 +135,7 @@ struct AgentQueueView: View {
 private struct AgentRunRow: View {
     let run: AgentRun
     @ObservedObject var agentStore: AgentWorkspaceStore
+    @Environment(\.strings) private var strings
     @State private var isHovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -142,7 +144,7 @@ private struct AgentRunRow: View {
     }
 
     private var pathLabel: String {
-        workingDirectory ?? "Path unavailable"
+        workingDirectory ?? strings.pathUnavailable
     }
 
     var body: some View {
@@ -183,30 +185,30 @@ private struct AgentRunRow: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isHovering)
         .help(helpText)
         .contextMenu {
-            Button("Focus terminal") {
+            Button(strings.focusTerminal) {
                 agentStore.focus(run: run)
             }
-            Button("Copy Path") {
+            Button(strings.copyPath) {
                 guard let workingDirectory else { return }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(workingDirectory, forType: .string)
             }
             .disabled(workingDirectory == nil)
         }
-        .accessibilityLabel("Detected \(run.provider.displayName) agent")
-        .accessibilityValue("\(pathLabel), \(run.state.displayName)")
-        .accessibilityHint("Focuses the associated terminal. Open the context menu to copy its path.")
+        .accessibilityLabel(strings.detectedAgent(provider: run.provider.displayName))
+        .accessibilityValue("\(pathLabel), \(strings.agentRunState(run.state))")
+        .accessibilityHint(strings.agentRowHint)
         .accessibilityElement(children: .ignore)
     }
 
     private var helpText: String {
         var details = [
-            "Path: \(pathLabel)",
-            "Provider: \(run.provider.displayName)",
-            "Status: \(run.state.displayName)",
-            "Last observed: \(run.lastActivityAt.formatted(date: .omitted, time: .standard))",
-            "Detection: \(run.confidence.rawValue)",
-            "Click to focus the terminal."
+            "\(strings.helpPath)\(pathLabel)",
+            "\(strings.helpProvider)\(run.provider.displayName)",
+            "\(strings.helpStatus)\(strings.agentRunState(run.state))",
+            "\(strings.helpLastObserved)\(run.lastActivityAt.formatted(date: .omitted, time: .standard))",
+            "\(strings.helpDetection)\(strings.detectionConfidence(run.confidence))",
+            strings.helpClickToFocus,
         ]
         if let message = run.statusMessage, !message.isEmpty {
             details.insert(message, at: 4)
@@ -217,6 +219,7 @@ private struct AgentRunRow: View {
 
 private struct AgentRunStatusChip: View {
     let run: AgentRun
+    @Environment(\.strings) private var strings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var color: Color {
@@ -226,7 +229,7 @@ private struct AgentRunStatusChip: View {
     var body: some View {
         HStack(spacing: 5) {
             statusSymbol
-            Text(run.state.displayName)
+            Text(strings.agentRunState(run.state))
         }
         .font(.system(size: 10, weight: .semibold, design: .monospaced))
         .foregroundColor(Theme.text)
@@ -237,8 +240,8 @@ private struct AgentRunStatusChip: View {
             Capsule()
                 .stroke(color.opacity(0.45), lineWidth: 1)
         )
-        .accessibilityLabel("Agent status")
-        .accessibilityValue(run.state.displayName)
+        .accessibilityLabel(strings.agentStatus)
+        .accessibilityValue(strings.agentRunState(run.state))
     }
 
     @ViewBuilder
@@ -286,6 +289,7 @@ private struct AgentRunStatusChip: View {
 struct AgentStatusBadge: View {
     let run: AgentRun
     var compact: Bool = false
+    @Environment(\.strings) private var strings
 
     var body: some View {
         HStack(spacing: 5) {
@@ -295,7 +299,7 @@ struct AgentStatusBadge: View {
             Text(run.provider.displayName)
             if !compact {
                 Text("·")
-                Text(run.state.displayName)
+                Text(strings.agentRunState(run.state))
             }
         }
         .font(.system(size: compact ? 10 : 9, weight: .semibold, design: .monospaced))
@@ -308,7 +312,7 @@ struct AgentStatusBadge: View {
                     .clipShape(Capsule())
             }
         }
-        .help("\(run.provider.displayName) · \(run.state.displayName) · \(run.confidence.rawValue)")
+        .help("\(run.provider.displayName) · \(strings.agentRunState(run.state)) · \(strings.detectionConfidence(run.confidence))")
     }
 }
 

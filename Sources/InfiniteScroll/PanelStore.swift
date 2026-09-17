@@ -21,6 +21,9 @@ class PanelStore: ObservableObject {
     @Published var rowHeight: CGFloat = PanelStore.defaultRowHeight
     @Published var commandScrollSpeed: CGFloat = PanelStore.defaultCommandScrollSpeed
     @Published var scrollbackLimit: Int = TmuxManager.defaultHistoryLimit
+    @Published var appLanguage: AppLanguage = .system {
+        didSet { L10n.update(appLanguage.resolved) }
+    }
     @Published var focusedCellID: UUID?
     @Published var showHelp: Bool = false
     @Published var showWorkspaceSearch: Bool = false
@@ -53,6 +56,7 @@ class PanelStore: ObservableObject {
             scrollbackLimit = Self.clampedScrollbackLimit(
                 saved.scrollbackLimit ?? TmuxManager.defaultHistoryLimit
             )
+            appLanguage = saved.appLanguage ?? .system
             for (i, state) in saved.panels.enumerated() {
                 panels.append(PanelModel.from(state: state, index: i))
             }
@@ -74,6 +78,10 @@ class PanelStore: ObservableObject {
             panels.append(PanelModel(index: 0, isMaster: true))
             addPanel()
         }
+
+        // AppKit alert paths read the resolved language from here; keep it in
+        // sync even on a fresh install with no saved state.
+        L10n.update(appLanguage.resolved)
 
         $panels
             .debounce(for: .seconds(2), scheduler: RunLoop.main)
@@ -107,6 +115,11 @@ class PanelStore: ObservableObject {
 
         $scrollbackLimit
             .debounce(for: .seconds(2), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.save() }
+            .store(in: &autosaveCancellables)
+
+        $appLanguage
+            .dropFirst()
             .sink { [weak self] _ in self?.save() }
             .store(in: &autosaveCancellables)
 
@@ -290,7 +303,7 @@ class PanelStore: ObservableObject {
     }
 
     func searchResults(matching query: String) -> [WorkspaceSearchResult] {
-        WorkspaceSearch.results(in: panels, matching: query)
+        WorkspaceSearch.results(in: panels, matching: query, strings: L10n.strings)
     }
 
     func jumpToSearchResult(_ result: WorkspaceSearchResult) {
@@ -334,18 +347,19 @@ class PanelStore: ObservableObject {
     private func presentRenamePrompt(for rowIndex: Int) {
         guard panels.indices.contains(rowIndex) else { return }
 
+        let strings = L10n.strings
         let panel = panels[rowIndex]
         let nameField = NSTextField(string: panel.title)
         nameField.frame = NSRect(x: 0, y: 0, width: 300, height: 24)
-        nameField.placeholderString = "Row name"
+        nameField.placeholderString = strings.renameRowPlaceholder
         nameField.selectText(nil)
 
         let alert = NSAlert()
-        alert.messageText = panel.isMaster ? "Rename Master Row" : "Rename Row"
-        alert.informativeText = "Choose a name for this row."
+        alert.messageText = panel.isMaster ? strings.renameMasterRowTitle : strings.renameRowTitle
+        alert.informativeText = strings.renameRowMessage
         alert.accessoryView = nameField
-        alert.addButton(withTitle: "Rename")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: strings.rename)
+        alert.addButton(withTitle: strings.cancel)
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
@@ -614,7 +628,8 @@ class PanelStore: ObservableObject {
             fontName: fontName,
             rowHeight: rowHeight,
             commandScrollSpeed: Self.clampedCommandScrollSpeed(commandScrollSpeed),
-            scrollbackLimit: Self.clampedScrollbackLimit(scrollbackLimit)
+            scrollbackLimit: Self.clampedScrollbackLimit(scrollbackLimit),
+            appLanguage: appLanguage
         )
         PersistenceManager.save(state)
     }

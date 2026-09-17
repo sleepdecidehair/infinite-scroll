@@ -87,16 +87,12 @@ enum CLIInstaller {
             return
         }
 
+        let strings = L10n.strings
         let alert = NSAlert()
-        alert.messageText = "Install 'infinite-scroll' command?"
-        alert.informativeText = """
-            Install a shell command at /usr/local/bin/infinite-scroll so AI agents \
-            (or you) can read and manipulate cells from the terminal.
-
-            You can install or uninstall this later from Settings.
-            """
-        alert.addButton(withTitle: "Install")
-        alert.addButton(withTitle: "Not Now")
+        alert.messageText = strings.cliInstallPromptTitle
+        alert.informativeText = strings.cliInstallPromptMessage
+        alert.addButton(withTitle: strings.cliInstall)
+        alert.addButton(withTitle: strings.cliNotNow)
         alert.alertStyle = .informational
 
         let response = alert.runModal()
@@ -109,8 +105,8 @@ enum CLIInstaller {
                 guard !installed else { return }
                 DispatchQueue.main.async {
                     let failAlert = NSAlert()
-                    failAlert.messageText = "Install failed"
-                    failAlert.informativeText = "Could not install the shell command. You can try again from Settings."
+                    failAlert.messageText = strings.cliInstallFailedTitle
+                    failAlert.informativeText = strings.cliInstallFailedMessage
                     failAlert.runModal()
                 }
             }
